@@ -1,0 +1,21 @@
+{
+  "name": "fingular",
+  "main": "fingular.js",
+  "version": "0.1.0",
+  "authors": [
+    "Harry Schmidt <goldibex@casetext.com>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "~1.2.16",
+    "angular-mocks": "~1.2.16"
+  }
+}

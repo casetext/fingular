@@ -1,0 +1,25 @@
+{
+  "name": "fingular",
+  "version": "0.1.0",
+  "description": "A Firebase service provider for AngularJS designed for testability.",
+  "main": "fingular.js",
+  "scripts": {
+    "test": "if [ ! -d bower_components ]; then bower install; fi; ./node_modules/mocha-phantomjs/bin/mocha-phantomjs ./test/index.html"
+  },
+  "keywords": [
+    "angular",
+    "angularjs",
+    "firebase",
+    "testing",
+    "test",
+    "testability",
+    "provider"
+  ],
+  "author": "Harry Schmidt",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^1.9.1",
+    "mocha-phantomjs": "^3.3.2",
+    "bower": "^1.3.3"
+  }
+}
