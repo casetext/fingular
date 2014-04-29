@@ -5,18 +5,24 @@
   </head>
   <body ng-app="testModule">
     <div id="mocha"></div>
+    <script src="../bower_components/es5-shim/es5-shim.js"></script>
+    <script src="../node_modules/mockfirebase/node_modules/lodash/lodash.js"></script>
     <script src="../node_modules/mocha-phantomjs/node_modules/mocha/mocha.js"></script>
     <script src="../node_modules/chai/chai.js"></script>
+    <script src="../node_modules/mockfirebase/node_modules/sinon/pkg/sinon.js"></script>
     <script>
       mocha.ui('bdd');
       mocha.reporter('html');
       expect = chai.expect;
     </script>
+    <script src="../bower_components/firebase/firebase-debug.js"></script>
     <script src="../bower_components/angular/angular.js"></script>
     <script src="../bower_components/angular-mocks/angular-mocks.js"></script>
+    <script src="../node_modules/mockfirebase/MockFirebase.js"></script>
     <script src="../fingular.js"></script>
 
     <script src="spec/index.js"></script>
+
     <script>
       if (window.mochaPhantomJS) { mochaPhantomJS.run(); }
       else { mocha.run(); }
