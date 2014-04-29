@@ -48,15 +48,24 @@
                           'constant \'firebaseDomain\' or by setting ' +
                           'the \'firebaseDomain\' property on the $firebaseProvider!');
         }
-        if ($injector.has('firebaseMock')) {
-          mockFirebase = injector.get('firebaseMock');
-          mockMode = true;
-        }
-        if ($injector.has('firebaseMockData')) {
-          angular.forEach($injector.get('firebaseMockData'), function(mockDatum, key) {
+      }
+      
+      if ($injector.has('firebaseProtocol')) {
+        protocol = $injector.get('firebaseProtocol');
+      }
+
+      if ($injector.has('firebaseMock') && mockFirebase === undefined) {
+        mockFirebase = $injector.get('firebaseMock');
+        mockMode = true;
+      }
+      
+      if ($injector.has('firebaseMockData')) {
+        angular.forEach($injector.get('firebaseMockData'), function(mockDatum, key) {
+          // FIXME(goldibex): deep introspection of mock data, this is pretty simplistic
+          if (!mockData[key]) {
             mockData[key] = mockDatum;
-          });
-        }
+          }
+        });
       }
 
       var injectable = function(path) {
