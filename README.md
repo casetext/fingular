@@ -23,13 +23,13 @@ Yes, in three important ways.
 
 1. $firebaseRef takes care of the domain name part of the Firebase connection. All you have to supply is the key path, like so:
 
-```javascript
-$firebaseRefProvider.domain('myinstance.firebaseio.com');
-...
-$firebaseRef('/users/fred/favorites').push('Maria');
-```
+  ```javascript
+  $firebaseRefProvider.domain('myinstance.firebaseio.com');
+  ...
+  $firebaseRef('/users/fred/favorites').push('Maria');
+  ```
 
-This way you can easily change which Firebase instance your app points to for purposes of integration testing or migration.
+  This way you can easily change which Firebase instance your app points to for purposes of integration testing or migration.
 
 2. Depending on configuration, $firebaseRef is either a proxy to Firebase or a mock object like MockFirebase. An example of how to do this is provided in examples/myApp.js and examples/myApp_test.js.
 
