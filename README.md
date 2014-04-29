@@ -85,3 +85,16 @@ angular.module('myApp', ['fingular'])
   });
 });
 ```
+
+
+## Notes
+
+Thanks to firebase-debug, on ```npm test``` you'll see this error:
+
+```Error loading resource file:///Users/goldibex/Development/casetext/fingular/test/deps.js (203). Details: Error opening /Users/goldibex/Development/casetext/fingular/test/deps.js: No such file or directory```
+
+You can just ignore that.
+
+## License
+
+MIT
