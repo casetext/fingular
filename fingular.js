@@ -49,7 +49,7 @@
                           'the \'firebaseDomain\' property on the $firebaseProvider!');
         }
       }
-      
+
       if ($injector.has('firebaseProtocol')) {
         protocol = $injector.get('firebaseProtocol');
       }
@@ -58,7 +58,7 @@
         mockFirebase = $injector.get('firebaseMock');
         mockMode = true;
       }
-      
+
       if ($injector.has('firebaseMockData')) {
         angular.forEach($injector.get('firebaseMockData'), function(mockDatum, key) {
           // FIXME(goldibex): deep introspection of mock data, this is pretty simplistic
@@ -88,9 +88,190 @@
   })
   .provider('$firebaseUser', function FirebaseUserProvider() {
 
-    this.$get = ['$injector', function($injector) {
+    var usersCollection = '/users'
+      , userPromise
+      , mockUserConstructor
+      , mockUserData
+      , mockMode
+      , authMethod
+      , authObj;
 
+    this['usersCollection'] = function(newCollectionPath) {
+      if (!newCollectionPath) {
+        return usersCollection;
+      } else {
+        usersCollection = newCollectionPath;
+        return this;
+      }
+    }
+
+    this['mockWith'] = function(mocker) {
+      mockUserConstructor = mocker;
+      mockMode = true;
+      return this;
+    };
+
+    this['mockUser'] = function(md) {
+      mockUserData = md;
+      return this;
+    }
+
+    this.$get = ['$q', '$injector', '$firebaseRef', function($q, $injector, $firebaseRef) {
+
+      if ($injector.has('firebaseUserMockData')) {
+        mockUserData = $injector.get('firebaseUserMockData');
+      }
+      if ($injector.has('firebaseUserMock')) {
+        mockUserConstructor = $injector.get('firebaseUserMock');
+        mockMode = true;
+      }
+      if ($injector.has('firebaseUserCollectionPath')) {
+        usersCollection = $injector.get('firebaseUserCollectionPath');
+      }
+
+      var Constructor = mockMode ? mockUserConstructor : FirebaseSimpleLogin;
+
+      function FirebaseUser() {
+        /**
+         * Stamps a given Firebase reference with the current user's information,
+         * and log the stamping on the user's own object.
+         * @param {Firebase} reference A firebase reference pointing somewhere
+         * @param {String} propName The name of the child on the reference to store the user's key. Defaults to 'user.'
+         */
+        this.stamp = function(reference, propName) {
+          // Get the absolute path of the reference.
+          var hostLength = reference.root().toString().length
+            , path = decodeURI(reference.toString().slice(hostLength + 1))
+            , logPath = [usersCollection, user.uid, 'log', path].join('/');
+
+          // Log the revision in the user history.
+          $firebaseRef(logPath).set((new Date()).getTime());
+        };
+
+        /**
+         * Logs in using the given authType, or hands back the currently logged-in user.
+         * @param {String} requestedAuthMethod A Firebase-supported auth method string, like 'facebook'.
+         * @param {Object} [data] Additional data to pass into the login request, like email and password.
+         * @param {String} [path] The path to authenticate against. Default is "/".
+         * @returns {Promise} a promise that will resolve once login is finished.
+         */
+        this.login = function(requestedAuthMethod, path) {
+          if (userPromise && requestedAuthMethod === authMethod) {
+            return userPromise;
+          } else {
+            // Return a deferred that provides the account when the
+            // authentication completes.
+            authMethod = requestedAuthMethod;
+            var deferred = $q.defer();
+            userPromise = deferred.promise;
+
+            setTimeout(function() {
+
+              authObj = new Constructor($firebaseRef(path || '/'), function(err, authUser) {
+                if (err) {
+                  deferred.reject(err);
+                } else {
+                  // get a reference to the corresponding object in the user profile tree
+                  var userRef = $firebaseRef([usersCollection, authUser.uid].join('/'));
+                  userRef.transaction(function(currentData) {
+                    var newData = currentData || {};
+                    if (!newData.thirdParty) {
+                      newData.thirdParty = {};
+                    }
+                    if (authUser.accessToken) {
+                      newData.accessTokens = newData.accessTokens || {};
+                      newData.accessTokens[authMethod] = authUser.accessToken;
+                    }
+                    newData.thirdPartyData[authMethod] = authUser.thirdPartyData;
+                    newData.displayName = authUser.displayName;
+                    return newData;
+                  }, function(err, committed, snapshot) {
+                    if (err) {
+                      deferred.reject(err);
+                    } else if (!committed) {
+                      deferred.reject(new Error('User update transaction was aborted.'));
+                    } else {
+                      deferred.resolve(userRef);
+                    }
+                  });
+                }
+              }, mockUserData);
+              authObj.login(requestedAuthMethod);
+            }, 1);
+            return userPromise;
+          }
+        };
+
+        this.logout = function() {
+          if (authObj) {
+            authObj.logout();
+            authObj = undefined;
+          } else {
+            throw new Error('Not logged in!');
+          }
+        };
+
+        this.createUser = function(email, password) {
+          var deferred = $q.defer();
+          var oneTimeAuth = new Constructor($firebaseRef('/'), function() {});
+          oneTimeAuth.createUser(email, password, function(err, userData) {
+            if (!err) {
+              this.login('password', {
+                email: email,
+                password: password
+              }).then(function(userRef) {
+                deferred.resolve(userRef);
+              }, function(err) {
+                deferred.reject(err);
+              });
+            } else {
+              deferred.reject(err);
+            }
+          });
+          return deferred.promise;
+        };
+
+        this.removeUser = function(email, password) {
+          var deferred = $q.defer();
+          var oneTimeAuth = new Constructor($firebaseRef('/'), function() {});
+          oneTimeAuth.changePassword(email, password, function(err, ok) {
+            if (ok) {
+              deferred.resolve(ok);
+            } else {
+              deferred.reject(err);
+            }
+          });
+          return deferred.promise;
+        };
+
+        this.changePassword = function(email, oldpassword, newpassword) {
+          var deferred = $q.defer();
+          var oneTimeAuth = new Constructor($firebaseRef('/'), function() {});
+          oneTimeAuth.changePassword(email, oldpassword, newpassword, function(err, ok) {
+            if (ok) {
+              deferred.resolve(ok);
+            } else {
+              deferred.reject(err);
+            }
+          });
+          return deferred.promise;
+        };
+
+        this.sendPasswordResetEmail = function(email) {
+          var deferred = $q.defer();
+          var oneTimeAuth = new Constructor($firebaseRef('/'), function() {});
+          oneTimeAuth.sendPasswordResetEmail(email, function(err, ok) {
+            if (ok) {
+              deferred.resolve(ok);
+            } else {
+              deferred.reject(err);
+            }
+          });
+          return deferred.promise;
+        };
+      };
+
+      return new FirebaseUser();
     }];
   });
-
 })(window.angular, window.Firebase);
