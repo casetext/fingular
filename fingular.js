@@ -133,22 +133,6 @@
 
       function FirebaseUser() {
         /**
-         * Stamps a given Firebase reference with the current user's information,
-         * and log the stamping on the user's own object.
-         * @param {Firebase} reference A firebase reference pointing somewhere
-         * @param {String} propName The name of the child on the reference to store the user's key. Defaults to 'user.'
-         */
-        this.stamp = function(reference, propName) {
-          // Get the absolute path of the reference.
-          var hostLength = reference.root().toString().length
-            , path = decodeURI(reference.toString().slice(hostLength + 1))
-            , logPath = [usersCollection, user.uid, 'log', path].join('/');
-
-          // Log the revision in the user history.
-          $firebaseRef(logPath).set((new Date()).getTime());
-        };
-
-        /**
          * Logs in using the given authType, or hands back the currently logged-in user.
          * @param {String} requestedAuthMethod A Firebase-supported auth method string, like 'facebook'.
          * @param {Object} [data] Additional data to pass into the login request, like email and password.
@@ -164,40 +148,49 @@
             authMethod = requestedAuthMethod;
             var deferred = $q.defer();
             userPromise = deferred.promise;
-
-            setTimeout(function() {
-
-              authObj = new Constructor($firebaseRef(path || '/'), function(err, authUser) {
-                if (err) {
-                  deferred.reject(err);
-                } else {
-                  // get a reference to the corresponding object in the user profile tree
-                  var userRef = $firebaseRef([usersCollection, authUser.uid].join('/'));
-                  userRef.transaction(function(currentData) {
-                    var newData = currentData || {};
-                    if (!newData.thirdParty) {
-                      newData.thirdParty = {};
-                    }
-                    if (authUser.accessToken) {
-                      newData.accessTokens = newData.accessTokens || {};
-                      newData.accessTokens[authMethod] = authUser.accessToken;
-                    }
-                    newData.thirdPartyData[authMethod] = authUser.thirdPartyData;
-                    newData.displayName = authUser.displayName;
-                    return newData;
-                  }, function(err, committed, snapshot) {
-                    if (err) {
-                      deferred.reject(err);
-                    } else if (!committed) {
-                      deferred.reject(new Error('User update transaction was aborted.'));
-                    } else {
-                      deferred.resolve(userRef);
-                    }
-                  });
-                }
-              }, mockUserData);
+            userPromise.authRef = $firebaseRef(path || '/');
+            authObj = new Constructor(userPromise.authRef, function(err, authUser) {
+              if (err) {
+                deferred.reject(err);
+              } else {
+                // get a reference to the corresponding object in the user profile tree
+                var userRef = $firebaseRef([usersCollection, authUser.uid].join('/'));
+                deferred.notify({
+                  code: 'LOGIN_ACCEPTED',
+                  object: userRef
+                });
+                userRef.transaction(function(currentData) {
+                  console.log('transact');
+                  var newData = currentData || {};
+                  if (!newData.thirdPartyData) {
+                    newData.thirdPartyData = {};
+                  }
+                  if (authUser.accessToken) {
+                    newData.accessTokens = newData.accessTokens || {};
+                    newData.accessTokens[authMethod] = authUser.accessToken;
+                  }
+                  newData.thirdPartyData[authMethod] = authUser.thirdPartyData;
+                  newData.displayName = authUser.displayName;
+                  return newData;
+                }, function(err, committed, snapshot) {
+                  console.log('result');
+                  if (err) {
+                    deferred.reject(err);
+                  } else if (!committed) {
+                    deferred.reject(new Error('User update transaction was aborted.'));
+                  } else {
+                    deferred.resolve(userRef);
+                  }
+                }, false);
+              }
+            }, mockUserData);
+            userPromise.authObj = authObj;
+            try {
               authObj.login(requestedAuthMethod);
-            }, 1);
+            } catch(e) {
+              deferred.reject(e);
+            }
+
             return userPromise;
           }
         };
@@ -271,6 +264,21 @@
         };
       };
 
+      /**
+       * Stamps a given Firebase reference with the current user's information,
+       * and log the stamping on the user's own object.
+       * @param {Firebase} reference A firebase reference pointing somewhere
+       * @param {String} propName The name of the child on the reference to store the user's key. Defaults to 'user.'
+       */
+      this.stamp = function(reference, propName) {
+        // Get the absolute path of the reference.
+        var hostLength = reference.root().toString().length
+          , path = decodeURI(reference.toString().slice(hostLength + 1))
+          , logPath = [usersCollection, user.uid, 'log', path].join('/');
+
+        // Log the revision in the user history.
+          $firebaseRef(logPath).set((new Date()).getTime());
+      };
       return new FirebaseUser();
     }];
   });
