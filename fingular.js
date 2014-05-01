@@ -134,6 +134,63 @@
       var Constructor = mockMode ? mockUserConstructor : FirebaseSimpleLogin;
 
       function FirebaseUser() {
+        this._getUserRef = function(authRef) {
+          var deferred = $q.defer();
+          // get a reference to the corresponding object in the user profile tree
+          var userRef = $firebaseRef([usersCollection, authUser.uid].join('/'));
+          userRef.transaction(function(currentData) {
+            var newData = currentData || {};
+            if (!newData.thirdPartyData) {
+              newData.thirdPartyData = {};
+            }
+            if (authUser.accessToken) {
+              newData.accessTokens = newData.accessTokens || {};
+              newData.accessTokens[authMethod] = authUser.accessToken;
+            }
+            newData.thirdPartyData[authMethod] = authUser.thirdPartyData;
+            newData.displayName = authUser.displayName;
+            return newData;
+          }, function(err, committed, snapshot) {
+            console.log('result');
+            if (err) {
+              deferred.reject(err);
+            } else if (!committed) {
+              deferred.reject(new Error('User update transaction was aborted.'));
+            } else {
+              deferred.resolve(userRef);
+            }
+          }, false);
+
+          if (userRef.flush) {
+            userRef.flush();
+          }
+
+          return deferred.promise;
+        };
+
+        /**
+         * returns a promise to the currently logged-in user, or null if there isn't one.
+         * @returns {Promise} a promise that will resolve with the user.
+         */
+        this.get = function() {
+          var deferred = $q.defer();
+          var self = this;
+          var auth = new Constructor($firebaseRef(), function(err, authUser) {
+            if (err) {
+              deferred.reject(err);
+            } else if (authUser !== null) {
+              self._getUserRef(authUser).then(function(userRef) {
+                deferred.resolve(userRef);
+              }, function(err) {
+                deferred.reject(err);
+              });
+            } else {
+              deferred.resolve(null);
+            }
+          }, mockUserData);
+          return deferred.promise;
+        };
+
         /**
          * Logs in using the given authType, or hands back the currently logged-in user.
          * @param {String} requestedAuthMethod A Firebase-supported auth method string, like 'facebook'.
@@ -141,60 +198,31 @@
          * @param {String} [path] The path to authenticate against. Default is "/".
          * @returns {Promise} a promise that will resolve once login is finished.
          */
-        this.login = function(requestedAuthMethod, path) {
-          if (userPromise && requestedAuthMethod === authMethod) {
-            return userPromise;
-          } else {
-            // Return a deferred that provides the account when the
-            // authentication completes.
-            authMethod = requestedAuthMethod;
-            var deferred = $q.defer();
-            userPromise = deferred.promise;
-            userPromise.authRef = $firebaseRef(path || '/');
-            authObj = new Constructor(userPromise.authRef, function(err, authUser) {
-              if (err) {
-                deferred.reject(err);
-              } else {
-                // get a reference to the corresponding object in the user profile tree
-                var userRef = $firebaseRef([usersCollection, authUser.uid].join('/'));
-                deferred.notify({
-                  code: 'LOGIN_ACCEPTED',
-                  object: userRef
-                });
-                userRef.transaction(function(currentData) {
-                  console.log('transact');
-                  var newData = currentData || {};
-                  if (!newData.thirdPartyData) {
-                    newData.thirdPartyData = {};
-                  }
-                  if (authUser.accessToken) {
-                    newData.accessTokens = newData.accessTokens || {};
-                    newData.accessTokens[authMethod] = authUser.accessToken;
-                  }
-                  newData.thirdPartyData[authMethod] = authUser.thirdPartyData;
-                  newData.displayName = authUser.displayName;
-                  return newData;
-                }, function(err, committed, snapshot) {
-                  console.log('result');
-                  if (err) {
-                    deferred.reject(err);
-                  } else if (!committed) {
-                    deferred.reject(new Error('User update transaction was aborted.'));
-                  } else {
-                    deferred.resolve(userRef);
-                  }
-                }, false);
-              }
-            }, mockUserData);
-            userPromise.authObj = authObj;
-            try {
-              authObj.login(requestedAuthMethod);
-            } catch(e) {
-              deferred.reject(e);
-            }
+        this.login = function(requestedAuthMethod, data, path) {
+          var deferred = $q.defer()
+            , self = this;
 
-            return userPromise;
+          if (path === undefined && typeof(data) === 'string') {
+            path = data;
+            data = undefined;
           }
+
+          var auth = new Constructor($firebaseRef(path), function(err, authUser) {
+            if (err) {
+              deferred.reject(err);
+            } else {
+              deferred.notify(authUser);
+              self.get().then(function(userRef) {
+                deferred.resolve(userRef);
+              }, function(err) {
+                deferred.reject(err);
+              });
+            }
+          }, mockUserData);
+          auth.login(requestedAuthMethod, data);
+
+          deferred.promise.authObj = auth;
+          return deferred.promise;
         };
 
         this.logout = function() {

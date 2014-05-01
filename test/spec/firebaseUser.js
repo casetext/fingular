@@ -62,7 +62,7 @@ describe('the "$firebaseUser" provider', function() {
           this.authType = authType;
           setTimeout(function() {
             cb(null, data);
-          }, 1); 
+          }, 1);
         };
       }
 
@@ -132,9 +132,7 @@ describe('the "$firebaseUser" service', function() {
         }, function(e) {
           throw e;
         }, function(notify) {
-          notify.object.flush.call(notify.object);
         });
-        promise.authRef.flush.call(promise.authRef);
         promise.authObj.flush(promise.authObj);
         $rootScope.$apply();
       });
