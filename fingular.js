@@ -153,6 +153,9 @@
             if (authUser.displayName) {
               newData.displayName = authUser.displayName;
             }
+            if (authUser.email) {
+              newData.email = authUser.email;
+            }
             return newData;
           }, function(err, committed, snapshot) {
             if (err) {
