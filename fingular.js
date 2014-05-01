@@ -69,7 +69,9 @@
       }
 
       var injectable = function(path) {
-        if (path[0] !== '/') {
+        if (!path) {
+          path = '/';
+        } else if (path[0] !== '/') {
           path = '/' + path;
         }
 
