@@ -242,21 +242,12 @@
             , self = this
             , oneTimeAuth = new Constructor($firebaseRef('/'), function() {});
           oneTimeAuth.createUser(email, password, function(err, userData) {
-            if (!err) {
-              self.login('password', {
-                email: email,
-                password: password
-              }).then(function(userRef) {
-                deferred.resolve(userRef);
-              }, function(err) {
-                $log.debug('login of newly-created user failed');
-                $log.debug(err);
-                deferred.reject(err);
-              });
-            } else {
+            if (err) {
               $log.debug('user create failed');
               $log.debug(err);
               deferred.reject(err);
+            } else {
+              deferred.resolve(userData);
             }
           });
           return deferred.promise;
