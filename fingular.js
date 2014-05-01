@@ -249,7 +249,15 @@
               $log.debug(err);
               deferred.reject(err);
             } else {
-              deferred.resolve(userData);
+              self.login('password', {
+                email: email,
+                password: password
+              }).then(function(userRef) {
+                deferred.resolve(userRef);
+              }, function(err) {
+                deferred.reject(err);
+              });
+              deferred.notify(userData);
             }
           });
           return deferred.promise;
