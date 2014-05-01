@@ -134,7 +134,7 @@
       var Constructor = mockMode ? mockUserConstructor : FirebaseSimpleLogin;
 
       function FirebaseUser() {
-        this._getUserRef = function(authRef) {
+        this._getUserRef = function(authUser) {
           var deferred = $q.defer();
           // get a reference to the corresponding object in the user profile tree
           var userRef = $firebaseRef([usersCollection, authUser.uid].join('/'));
