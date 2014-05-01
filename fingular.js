@@ -234,11 +234,12 @@
         };
 
         this.createUser = function(email, password) {
-          var deferred = $q.defer();
-          var oneTimeAuth = new Constructor($firebaseRef('/'), function() {});
+          var deferred = $q.defer()
+            , self = this
+            , oneTimeAuth = new Constructor($firebaseRef('/'), function() {});
           oneTimeAuth.createUser(email, password, function(err, userData) {
             if (!err) {
-              this.login('password', {
+              self.login('password', {
                 email: email,
                 password: password
               }).then(function(userRef) {
