@@ -147,8 +147,12 @@
               newData.accessTokens = newData.accessTokens || {};
               newData.accessTokens[authMethod] = authUser.accessToken;
             }
-            newData.thirdPartyData[authMethod] = authUser.thirdPartyData;
-            newData.displayName = authUser.displayName;
+            if (authUser.thirdPartyData) {
+              newData.thirdPartyData[authMethod] = authUser.thirdPartyData;
+            }
+            if (authUser.displayName) {
+              newData.displayName = authUser.displayName;
+            }
             return newData;
           }, function(err, committed, snapshot) {
             if (err) {
