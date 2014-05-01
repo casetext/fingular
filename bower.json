@@ -2,6 +2,10 @@
   "name": "fingular",
   "main": "fingular.js",
   "description": "A Firebase service provider for AngularJS designed for testability.",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/casetext/fingular.git"
+  },
   "version": "0.1.0",
   "authors": [
     "Harry Schmidt <goldibex@casetext.com>"
