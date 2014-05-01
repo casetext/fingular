@@ -213,13 +213,14 @@
           var auth = new Constructor($firebaseRef(path), function(err, authUser) {
             if (err) {
               deferred.reject(err);
-            } else {
-              deferred.notify(authUser);
-              self.get().then(function(userRef) {
+            } else if (authUser !== null) {
+              self._getUserRef(authUser).then(function(userRef) {
                 deferred.resolve(userRef);
               }, function(err) {
                 deferred.reject(err);
               });
+            } else {
+              deferred.resolve(null);
             }
           }, mockUserData);
           auth.login(requestedAuthMethod, data);
