@@ -6,7 +6,7 @@
     "type": "git",
     "url": "git://github.com/casetext/fingular.git"
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "authors": [
     "Harry Schmidt <goldibex@casetext.com>"
   ],
