@@ -118,7 +118,7 @@
       return this;
     }
 
-    this.$get = ['$q', '$injector', '$firebaseRef', function($q, $injector, $firebaseRef) {
+    this.$get = ['$log', '$q', '$injector', '$firebaseRef', function($log, $q, $injector, $firebaseRef) {
 
       if ($injector.has('firebaseUserMockData')) {
         mockUserData = $injector.get('firebaseUserMockData');
@@ -151,7 +151,6 @@
             newData.displayName = authUser.displayName;
             return newData;
           }, function(err, committed, snapshot) {
-            console.log('result');
             if (err) {
               deferred.reject(err);
             } else if (!committed) {
@@ -245,9 +244,13 @@
               }).then(function(userRef) {
                 deferred.resolve(userRef);
               }, function(err) {
+                $log.debug('login of newly-created user failed');
+                $log.debug(err);
                 deferred.reject(err);
               });
             } else {
+              $log.debug('user create failed');
+              $log.debug(err);
               deferred.reject(err);
             }
           });
@@ -256,7 +259,7 @@
 
         this.removeUser = function(email, password) {
           var deferred = $q.defer();
-          var oneTimeAuth = new Constructor($firebaseRef('/'), function() {});
+          var oneTimeAuth = new Constructor($firebaseRef(), function() {});
           oneTimeAuth.changePassword(email, password, function(err, ok) {
             if (ok) {
               deferred.resolve(ok);
