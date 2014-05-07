@@ -129,23 +129,21 @@ describe('the "$firebaseUser" service', function() {
   describe('#login', function() {
     it('fails on an invalid auth method', function(done) {
       inject(function($firebaseUser, $rootScope) {
-        var off = $rootScope.$on('firebaseUser:error', function() {
-          off();
+        $firebaseUser.login('invalid').catch(function() {
           done();
         });
-        $firebaseUser.login('invalid');
         $firebaseUser._auth.flush();
+        $rootScope.$digest();
       });
     });
 
     it('succeeds on a valid auth method', function(done) {
-      inject(function($firebaseUser, $rootScope) {
-        var off = $rootScope.$on('firebaseUser:auth', function() {
-          off();
+      inject(function($rootScope, $firebaseUser) {
+        $firebaseUser.login('facebook').then(function() {
           done();
         });
-        $firebaseUser.login('facebook');
         $firebaseUser._auth.flush();
+        $rootScope.$digest();
       });
     });
   });
