@@ -15,11 +15,11 @@ But how do you seamlessly switch between using MockFirebase in your tests, and r
 2. Add the Fingular module to your own module's dependencies.
 3. Configure Fingular either by using the provider object or by setting module values.
 
-Now you can inject the $firebaseRef object anywhere in Angular. $firebaseRef is a proxy for ```new Firebase(url);```
+Now you can inject the $firebaseRef and $firebaseUser objects anywhere in Angular. $firebaseRef is a proxy for ```new Firebase(url);```, and $firebaseUser is a proxy for ```new FirebaseSimpleLogin(method, options);```.
 
-## Does $firebaseRef work differently from (new Firebase();) ?
+## $firebaseRef
 
-Yes, in three important ways.
+### Usage 
 
 1. $firebaseRef takes care of the domain name part of the Firebase connection. All you have to supply is the key path, like so:
 
@@ -38,11 +38,11 @@ Yes, in three important ways.
   - ```domain```: the domain the firebaseRef points to.
   - ```mocked```: boolean. Tells whether the $firebaseRef is mocked out.
 
-## Configuration
+### Configuration
 
-You can configure Fingular either by setting values in your Angular module or by configuring $firebaseRefProvider. Settings on the provider override the values.
+You can configure $firebaseRef either by setting values in your Angular module or by configuring $firebaseRefProvider. Settings on the provider override the values.
 
-### Values
+#### Values
 
 - ```firebaseDomain```: the domain name of the Firebase instance to point to.
 - ```firebaseProtocol```: Either ```http``` or ```https```. Defaults to https.
@@ -65,10 +65,10 @@ angular.module('myApp', ['fingular'])
 });
 ```
 
-### $firebaseRefProvider
+#### $firebaseRefProvider
 
 - ```domain(domainName)```: the domain name of the Firebase instance to point to.
-- ```protocol(protocolName```: Either ```http``` or ```https```. Defaults to https.
+- ```protocol(protocolName)```: Either ```http``` or ```https```. Defaults to https.
 - ```mockWith(constructorFunction)```: a mock constructor to substitute for Firebase.
 - ```mockOut(keyPath, value)```: Have the mock Firebase object supply the given data for the given path. Currently only works with MockFirebase. (If you wish to use your own mock, ```value``` will be supplied as a second argument to the mock constructor function.
 
@@ -85,6 +85,61 @@ angular.module('myApp', ['fingular'])
   });
 });
 ```
+
+## $firebaseUser
+
+You can use $firebaseUser in place of FirebaseSimpleLogin to obtain some advantages vis-a-vis testing and some bonus Angular integration to boot.
+
+### Usage
+
+```javascript
+angular.module('myModule', ['fingular'])
+.controller('myController', function($firebaseUser, $rootScope) {
+  if ($rootScope.firebaseUser.$anonymous) {
+    console.log('Logging in...');
+    $firebaseUser.login.then(function(user) {
+      console.log('user logged in!');
+      console.log(user);
+    }, function(err) {
+      console.error('login failed!');
+      console.error(err);
+    });
+  } else {
+    console.log($rootScope.firebaseUser);
+    $rootScope.firebaseUserRef.on('value', function(userInfo) {
+      console.log(userInfo.val());
+    });
+  }
+});
+```
+
+### Configuration
+
+You can configure $firebaseUser either by setting values in your Angular module or by configuring $firebaseUserProvider. Settings on the provider override the values.
+
+#### Values
+
+- ```firebaseUserMock```: The mock user constructor to substitute for FirebaseSingleLogin. Ordinarily you'll want to use MockFirebaseSimpleLogin.
+- ```firebaseUserMockData```: user data to be handed to the mocking framework.
+- ```firebaseUserCollectionPth(path)```: the absolute path to the collection of Firebase users in your Firebase. Defaults to /users, which you probably shouldn't change without good reason.
+
+#### $firebaseUserProvider
+
+- ```usersCollection(path)```: the absolute path to the collection of Firebase users in your Firebase. Defaults to /users, which you probably shouldn't change without good reason.
+- ```mockWith(mockConstructor)```: The mock user constructor to substitute for FirebaseSingleLogin. Ordinarily you'll want to use MockFirebaseSimpleLogin.
+
+Example use:
+```javascript
+angular.module('myApp', ['fingular'])
+.config(function($firebaseRefProvider) {
+  $firebaseRefProvider
+  .domain('test.firebaseio.com')
+  .mockWith(MockFirebase)
+  .mockOut('/users/fred', {
+    name: 'Freder Frederson',
+    hometown: 'Metropolis'
+  });
+});
 
 
 ## Notes
