@@ -210,7 +210,25 @@
          */
 
         this.login = function(requestedAuthMethod, data) {
+          var deferred = $q.defer()
+            , off1
+            , off2;
+          var off1, off2;
+
+          off1 = $rootScope.$on('firebaseUser:auth', function(e, user) {
+            off1();
+            off2();
+            deferred.resolve(user);
+          });
+
+          off2 = $rootScope.$on('firebaseUser:error', function(e, err) {
+            off1();
+            off2();
+            deferred.reject(err);
+          });
+
           self._auth.login(requestedAuthMethod, data);
+          return deferred.promise;
         };
 
         this.logout = function() {
