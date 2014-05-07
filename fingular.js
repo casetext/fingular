@@ -118,7 +118,7 @@
       return this;
     }
 
-    this.$get = ['$log', '$q', '$injector', '$firebaseRef', function($log, $q, $injector, $firebaseRef) {
+    this.$get = ['$log', '$q', '$injector', '$firebaseRef', '$rootScope', function($log, $q, $injector, $firebaseRef, $rootScope) {
 
       if ($injector.has('firebaseUserMockData')) {
         mockUserData = $injector.get('firebaseUserMockData');
@@ -134,12 +134,35 @@
       var Constructor = mockMode ? mockUserConstructor : FirebaseSimpleLogin;
 
       function FirebaseUser() {
-        this._getUserRef = function(authUser) {
-          var deferred = $q.defer();
+        var self = this
+          , anonUser = { $anonymous: true };
+
+        $rootScope.firebaseUser = anonUser;
+        this._auth = new Constructor($firebaseRef(), function(err, authUser) {
+          if (err) {
+            delete $rootScope.firebaseUser;
+            $rootScope.$apply(function() {
+              $rootScope.$broadcast('firebaseUser:error', {
+                code: 'authFailed',
+                error: err
+              });
+            });
+          } else if (authUser !== null) {
+            self._getUserProfile(authUser);
+          } else {
+            $rootScope.$apply(function() {
+              $rootScope.firebaseUser = anonUser;
+              $rootScope.$broadcast('firebaseUser:auth', anonUser);
+            });
+          }
+        }, mockUserData);
+
+        this._getUserProfile = function(authUser) {
           // get a reference to the corresponding object in the user profile tree
           var userRef = $firebaseRef([usersCollection, authUser.uid].join('/'));
           userRef.transaction(function(currentData) {
             var newData = currentData || {};
+
             if (!newData.thirdPartyData) {
               newData.thirdPartyData = {};
             }
@@ -159,105 +182,62 @@
             return newData;
           }, function(err, committed, snapshot) {
             if (err) {
-              deferred.reject(err);
+              $rootScope.$broadcast('firebaseUser:error', {
+                code: 'getUserProfileFailed',
+                error: err
+              });
             } else if (!committed) {
-              deferred.reject(new Error('User update transaction was aborted.'));
+              $rootScope.$broadcast('firebaseUser:error', {
+                code: 'getUserProfileFailed',
+                error: new Error('Transaction was aborted')
+              });
             } else {
-              deferred.resolve(userRef);
+              $rootScope.firebaseUser = snapshot.val();
+              $rootScope.firebaseUserRef = snapshot.ref();
+              $rootScope.$broadcast('firebaseUser:auth', snapshot);
             }
           }, false);
 
           if (userRef.flush) {
             userRef.flush();
           }
-
-          return deferred.promise;
-        };
-
-        /**
-         * returns a promise to the currently logged-in user, or null if there isn't one.
-         * @returns {Promise} a promise that will resolve with the user.
-         */
-        this.get = function() {
-          var deferred = $q.defer();
-          var self = this;
-          var auth = new Constructor($firebaseRef(), function(err, authUser) {
-            if (err) {
-              deferred.reject(err);
-            } else if (authUser !== null) {
-              self._getUserRef(authUser).then(function(userRef) {
-                deferred.resolve(userRef);
-              }, function(err) {
-                deferred.reject(err);
-              });
-            } else {
-              deferred.resolve(null);
-            }
-          }, mockUserData);
-          return deferred.promise;
         };
 
         /**
          * Logs in using the given authType, or hands back the currently logged-in user.
          * @param {String} requestedAuthMethod A Firebase-supported auth method string, like 'facebook'.
          * @param {Object} [data] Additional data to pass into the login request, like email and password.
-         * @param {String} [path] The path to authenticate against. Default is "/".
-         * @returns {Promise} a promise that will resolve once login is finished.
          */
-        this.login = function(requestedAuthMethod, data, path) {
-          var deferred = $q.defer()
-            , self = this;
 
-          if (path === undefined && typeof(data) === 'string') {
-            path = data;
-            data = undefined;
-          }
-
-          var auth = new Constructor($firebaseRef(path), function(err, authUser) {
-            if (err) {
-              deferred.reject(err);
-            } else if (authUser) {
-              self._getUserRef(authUser).then(function(userRef) {
-                deferred.resolve(userRef);
-              }, function(err) {
-                deferred.reject(err);
-              });
-            }
-          }, mockUserData);
-          auth.login(requestedAuthMethod, data);
-
-          deferred.promise.authObj = auth;
-          return deferred.promise;
+        this.login = function(requestedAuthMethod, data) {
+          self._auth.login(requestedAuthMethod, data);
         };
 
         this.logout = function() {
-          if (authObj) {
-            authObj.logout();
-            authObj = undefined;
-          } else {
-            throw new Error('Not logged in!');
-          }
+          self._auth.logout();
+          $rootScope.$broadcast('firebaseUser:unauth');
         };
 
         this.createUser = function(email, password) {
-          var deferred = $q.defer()
-            , self = this
-            , oneTimeAuth = new Constructor($firebaseRef('/'), function() {});
-          oneTimeAuth.createUser(email, password, function(err, userData) {
+          var deferred = $q.defer();
+
+          self._auth.createUser(email, password, function(err, userData) {
             if (err) {
               $log.debug('user create failed');
               $log.debug(err);
               deferred.reject(err);
             } else {
-              self.login('password', {
-                email: email,
-                password: password
-              }).then(function(userRef) {
-                deferred.resolve(userRef);
-              }, function(err) {
-                deferred.reject(err);
+              $rootScope.$apply(function() {
+                var off = $rootScope.$on('firebaseUser:auth', function(e, user) {
+                  off();
+                  deferred.resolve(user);
+                });
+
+                self.login('password', {
+                  email: email,
+                  password: password
+                });
               });
-              deferred.notify(userData);
             }
           });
           return deferred.promise;
@@ -265,8 +245,7 @@
 
         this.removeUser = function(email, password) {
           var deferred = $q.defer();
-          var oneTimeAuth = new Constructor($firebaseRef(), function() {});
-          oneTimeAuth.changePassword(email, password, function(err, ok) {
+          self._auth.changePassword(email, password, function(err, ok) {
             if (ok) {
               deferred.resolve(ok);
             } else {
@@ -278,8 +257,7 @@
 
         this.changePassword = function(email, oldpassword, newpassword) {
           var deferred = $q.defer();
-          var oneTimeAuth = new Constructor($firebaseRef('/'), function() {});
-          oneTimeAuth.changePassword(email, oldpassword, newpassword, function(err, ok) {
+          self._auth.changePassword(email, oldpassword, newpassword, function(err, ok) {
             if (ok) {
               deferred.resolve(ok);
             } else {
@@ -291,8 +269,7 @@
 
         this.sendPasswordResetEmail = function(email) {
           var deferred = $q.defer();
-          var oneTimeAuth = new Constructor($firebaseRef('/'), function() {});
-          oneTimeAuth.sendPasswordResetEmail(email, function(err, ok) {
+          self._auth.sendPasswordResetEmail(email, function(err, ok) {
             if (ok) {
               deferred.resolve(ok);
             } else {

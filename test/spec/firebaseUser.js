@@ -57,33 +57,41 @@ describe('the "$firebaseUser" provider', function() {
       });
 
       function MockUserPrototype(path, cb, data) {
-        this.data = data;
+        var self = this;
+        angular.forEach(data, function(v, k) {
+          self[k] = v;
+        });
         this.login = function(authType) {
           this.authType = authType;
-          setTimeout(function() {
-            cb(null, data);
-          }, 1);
+          cb(null, data);
         };
       }
 
-      module(function($firebaseUserProvider) {
+      module(function($firebaseRefProvider, $firebaseUserProvider) {
+        $firebaseRefProvider
+        .mockWith(MockFirebase)
+        .mockOut('/users/1', {
+          'foo': 'bar'
+        });
         $firebaseUserProvider
         .mockWith(MockUserPrototype)
         .mockUser({
           uid: 1,
-          displayName: 'Freder Frederson',
-          hometown: 'Metropolis'
+          displayName: 'Freder Frederson'
         });
       });
     });
 
-    it('accepts mock data via the "mockOut" method on the provider', function() {
-      inject(function($firebaseUser) {
-        $firebaseUser.login('facebook').then(function(err, data) {
-          expect(data.uid).to.equal(1);
+    it('accepts mock data via the "mockOut" method on the provider', function(done) {
+      inject(function($firebaseUser, $rootScope) {
+        var off = $rootScope.$on('firebaseUser:auth', function(e, userSnap) {
+          var data = userSnap.val();
           expect(data.displayName).to.equal('Freder Frederson');
-          expect(data.hometown).to.equal('Metropolis');
+          off();
+          done();
         });
+        $firebaseUser.login('facebook');
+        $rootScope.$apply();
       });
     });
   });
@@ -112,30 +120,75 @@ describe('the "$firebaseUser" service', function() {
     });
   });
 
+  it('hands back an anonymous user before authentication is tried', function() {
+    inject(function($rootScope, $firebaseUser) {
+      expect($rootScope.firebaseUser.$anonymous).to.be.true;
+    });
+  });
+
   describe('#login', function() {
     it('fails on an invalid auth method', function(done) {
       inject(function($firebaseUser, $rootScope) {
-        var promise = $firebaseUser.login('invalid');
-        promise.catch(function() {
+        var off = $rootScope.$on('firebaseUser:error', function() {
+          off();
           done();
         });
-        promise.authObj.flush();
-        $rootScope.$apply();
+        $firebaseUser.login('invalid');
+        $firebaseUser._auth.flush();
       });
     });
 
     it('succeeds on a valid auth method', function(done) {
       inject(function($firebaseUser, $rootScope) {
-        var promise = $firebaseUser.login('facebook');
-        promise.then(function(userRef) {
+        var off = $rootScope.$on('firebaseUser:auth', function() {
+          off();
           done();
-        }, function(e) {
-          throw e;
-        }, function(notify) {
         });
-        promise.authObj.flush(promise.authObj);
-        $rootScope.$apply();
+        $firebaseUser.login('facebook');
+        $firebaseUser._auth.flush();
       });
     });
-  })
+  });
+
+  describe('#logout', function() {
+    it('logs out the currently existing user', function(done) {
+      inject(function($firebaseUser, $rootScope) {
+        var off = $rootScope.$on('firebaseUser:unauth', function() {
+          off();
+          done();
+        });
+        $firebaseUser.logout();
+        $firebaseUser._auth.flush();
+      });
+    });
+  });
+  
+  describe('#createUser', function() {
+    it('returns a promise to create a new user', function(done) {
+      inject(function($firebaseUser, $rootScope) { 
+        $firebaseUser.logout();
+        $firebaseUser._auth.flush();
+        $firebaseUser.createUser('john@foo.com', 'foobar').then(function(ref) {
+          done();
+        }, function(err) {
+          throw(err);
+        });
+        $firebaseUser._auth.flush();
+        $rootScope.$digest();
+        $firebaseUser._auth.flush();
+        $rootScope.$digest();
+      });
+    });
+  
+  });
+  
+  describe('#removeUser', function() {
+  });
+  
+  describe('#changePassword', function() {
+  });
+  
+  describe('#sendPasswordResetEmail', function() {
+  
+  });
 });
