@@ -192,9 +192,11 @@
                 error: new Error('Transaction was aborted')
               });
             } else {
-              $rootScope.firebaseUser = snapshot.val();
-              $rootScope.firebaseUserRef = snapshot.ref();
-              $rootScope.$broadcast('firebaseUser:auth', snapshot);
+              $rootScope.$apply(function() {
+                $rootScope.firebaseUser = snapshot.val();
+                $rootScope.firebaseUserRef = snapshot.ref();
+                $rootScope.$broadcast('firebaseUser:auth', snapshot);
+              });
             }
           }, false);
 
