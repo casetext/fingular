@@ -121,26 +121,6 @@ You can configure $firebaseUser either by setting values in your Angular module 
 
 - ```firebaseUserMock```: The mock user constructor to substitute for FirebaseSingleLogin. Ordinarily you'll want to use MockFirebaseSimpleLogin.
 - ```firebaseUserMockData```: user data to be handed to the mocking framework.
-- ```firebaseUserCollectionPth(path)```: the absolute path to the collection of Firebase users in your Firebase. Defaults to /users, which you probably shouldn't change without good reason.
-
-#### $firebaseUserProvider
-
-- ```usersCollection(path)```: the absolute path to the collection of Firebase users in your Firebase. Defaults to /users, which you probably shouldn't change without good reason.
-- ```mockWith(mockConstructor)```: The mock user constructor to substitute for FirebaseSingleLogin. Ordinarily you'll want to use MockFirebaseSimpleLogin.
-
-Example use:
-```javascript
-angular.module('myApp', ['fingular'])
-.config(function($firebaseRefProvider) {
-  $firebaseRefProvider
-  .domain('test.firebaseio.com')
-  .mockWith(MockFirebase)
-  .mockOut('/users/fred', {
-    name: 'Freder Frederson',
-    hometown: 'Metropolis'
-  });
-});
-
 
 ## Notes
 

@@ -84,9 +84,8 @@ describe('the "$firebaseUser" provider', function() {
 
     it('accepts mock data via the "mockOut" method on the provider', function(done) {
       inject(function($firebaseUser, $rootScope) {
-        var off = $rootScope.$on('firebaseUser:auth', function(e, userSnap) {
-          var data = userSnap.val();
-          expect(data.displayName).to.equal('Freder Frederson');
+        var off = $rootScope.$on('firebaseUser:auth', function(e, authUser) {
+          expect(authUser.displayName).to.equal('Freder Frederson');
           off();
           done();
         });
@@ -102,11 +101,7 @@ describe('the "$firebaseUser" service', function() {
   beforeEach(function() {
     module('fingular');
     module(function($provide) {
-      $provide.constant('firebaseDomain', 'woot.firebaseio.com');
-      $provide.constant('firebaseMock', MockFirebase);
-      $provide.constant('firebaseMockData', {
-        users: {}
-      });
+      $provide.constant('firebaseDomain', 'test.foo.com');
       $provide.constant('firebaseUserMock', MockFirebaseSimpleLogin);
       $provide.constant('firebaseUserMockData', {
         uid: 1,
@@ -117,12 +112,6 @@ describe('the "$firebaseUser" service', function() {
           hometown: 'Metropolis'
         }
       });
-    });
-  });
-
-  it('hands back an anonymous user before authentication is tried', function() {
-    inject(function($rootScope, $firebaseUser) {
-      expect($rootScope.firebaseUser.$anonymous).to.be.true;
     });
   });
 
@@ -160,10 +149,10 @@ describe('the "$firebaseUser" service', function() {
       });
     });
   });
-  
+
   describe('#createUser', function() {
     it('returns a promise to create a new user', function(done) {
-      inject(function($firebaseUser, $rootScope) { 
+      inject(function($firebaseUser, $rootScope) {
         $firebaseUser.logout();
         $firebaseUser._auth.flush();
         $firebaseUser.createUser('john@foo.com', 'foobar').then(function(ref) {
@@ -177,16 +166,15 @@ describe('the "$firebaseUser" service', function() {
         $rootScope.$digest();
       });
     });
-  
   });
-  
+
   describe('#removeUser', function() {
   });
-  
+
   describe('#changePassword', function() {
   });
-  
+
   describe('#sendPasswordResetEmail', function() {
-  
+
   });
 });
