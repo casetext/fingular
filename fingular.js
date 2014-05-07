@@ -1,7 +1,17 @@
 'use strict';
-
-(function(angular, Firebase) {
-  angular.module('fingular', [])
+(function (root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    // AMD. Register as an anonymous module.
+    define(['angular', 'firebase', 'firebase-simple-login'], factory);
+  } else if (typeof exports === 'object') {
+    // Node-style CommonJS
+    module.exports = factory(require('angular'), require('firebase'), require('firebase-simple-login'));
+  } else {
+    // Browser globals
+    root.returnExports = factory(root.angular, root.Firebase, root.FirebaseSimpleLogin);
+  }
+}(this, function (angular, Firebase, FirebaseSimpleLogin) {
+  return angular.module('fingular', [])
   .provider('$firebaseRef', function FirebaseRefProvider() {
     var firebaseDomain
       , protocol = 'https'
@@ -316,4 +326,4 @@
       return new FirebaseUser();
     }];
   });
-})(window.angular, window.Firebase);
+}));
