@@ -153,7 +153,6 @@
             var deferred = $q.defer()
               , off1
               , off2;
-            var off1, off2;
 
             off1 = $rootScope.$on('firebaseUser:auth', function(e, user) {
               off1();
