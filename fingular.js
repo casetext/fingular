@@ -132,10 +132,7 @@
           this._auth = new Constructor($firebaseRef(), function(err, authUser) {
             if (err) {
               $rootScope.$apply(function() {
-                $rootScope.$broadcast('firebaseUser:error', {
-                  code: 'authFailed',
-                  error: err
-                });
+                $rootScope.$broadcast('firebaseUser:error', err);
               });
             } else if (authUser !== null) {
               $rootScope.$apply(function() {
