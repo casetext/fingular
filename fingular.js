@@ -141,6 +141,10 @@
               $rootScope.$apply(function() {
                 $rootScope.$broadcast('firebaseUser:auth', authUser);
               });
+            } else {
+              $rootScope.$apply(function() {
+                $rootScope.$broadcast('firebaseUser:unauth', authUser);
+              });
             }
           }, mockUserData);
 
@@ -172,7 +176,6 @@
 
           this.logout = function() {
             self._auth.logout();
-            $rootScope.$broadcast('firebaseUser:unauth');
           };
 
           this.createUser = function(email, password) {
