@@ -88,7 +88,7 @@ describe('the "$firebaseRef" provider', function() {
       });
       module('test3');
       inject(function(fb3) {
-        expect(fb3).to.be.an.instanceof(MockFirebase);
+        expect(fb3._ref).to.be.an.instanceof(MockFirebase);
       });
     });
 

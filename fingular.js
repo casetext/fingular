@@ -5,7 +5,8 @@
   .factory('ProxiedFirebase', ['$timeout', function($timeout) {
 
     var timeoutElapsed = function() {}
-      , timeoutLimit = 10000;
+      , timeoutLimit = 10000
+      , catchupTime = 50;
 
     function ProxiedQuery(query) {
       this._ref = query;
@@ -18,15 +19,23 @@
 
         this._ref.on(eventType, function() {
           callback.apply(context, arguments);
+
+          // cancel timeout
           if (timeout) {
-            $timeout.cancel(timeout);
-            timeout = null;
+            $timeout(function() {
+              $timeout.cancel(timeout);
+              timeout = null;
+            }, catchupTime);
           }
         }, function() {
           cancelCallback.apply(context, arguments);
+
+          // cancel timeout
           if (timeout) {
-            $timeout.cancel(timeout);
-            timeout = null;
+            $timeout(function() {
+              $timeout.cancel(timeout);
+              timeout = null;
+            }, catchupTime);
           }
         }, context);
         return callback;
@@ -42,15 +51,24 @@
 
         this._ref.once(eventType, function() {
           successCallback.apply(context, arguments);
+
+          // cancel timeout
           if (timeout) {
-            $timeout.cancel(timeout);
-            timeout = null;
+            $timeout(function() {
+              $timeout.cancel(timeout);
+              timeout = null;
+            }, catchupTime);
           }
+
         }, function() {
           failureCallback.apply(context, arguments);
+
+          // cancel timeout
           if (timeout) {
-            $timeout.cancel(timeout);
-            timeout = null;
+            $timeout(function() {
+              $timeout.cancel(timeout);
+              timeout = null;
+            }, catchupTime);
           }
         }, context);
       },
@@ -95,9 +113,13 @@
 
         this._ref.auth(token, function(err) {
           cb(arguments);
+
+          // cancel timeout
           if (timeout) {
-            $timeout.cancel(timeout);
-            timeout = null;
+            $timeout(function() {
+              $timeout.cancel(timeout);
+              timeout = null;
+            }, catchupTime);
           }
         });
       },
@@ -131,8 +153,10 @@
 
           // cancel timeout
           if (timeout) {
-            $timeout.cancel(timeout);
-            timeout = null;
+            $timeout(function() {
+              $timeout.cancel(timeout);
+              timeout = null;
+            }, catchupTime);
           }
         });
       },
@@ -146,8 +170,10 @@
 
           // cancel timeout
           if (timeout) {
-            $timeout.cancel(timeout);
-            timeout = null;
+            $timeout(function() {
+              $timeout.cancel(timeout);
+              timeout = null;
+            }, catchupTime);
           }
 
         });
@@ -162,8 +188,10 @@
 
           // cancel timeout
           if (timeout) {
-            $timeout.cancel(timeout);
-            timeout = null;
+            $timeout(function() {
+              $timeout.cancel(timeout);
+              timeout = null;
+            }, catchupTime);
           }
 
         });
@@ -178,8 +206,10 @@
 
           // cancel timeout
           if (timeout) {
-            $timeout.cancel(timeout);
-            timeout = null;
+            $timeout(function() {
+              $timeout.cancel(timeout);
+              timeout = null;
+            }, catchupTime);
           }
 
         });
@@ -194,8 +224,10 @@
 
           // cancel timeout
           if (timeout) {
-            $timeout.cancel(timeout);
-            timeout = null;
+            $timeout(function() {
+              $timeout.cancel(timeout);
+              timeout = null;
+            }, catchupTime);
           }
 
         });
@@ -210,8 +242,10 @@
 
           // cancel timeout
           if (timeout) {
-            $timeout.cancel(timeout);
-            timeout = null;
+            $timeout(function() {
+              $timeout.cancel(timeout);
+              timeout = null;
+            }, catchupTime);
           }
 
         });
@@ -232,8 +266,10 @@
 
           // cancel timeout
           if (timeout) {
-            $timeout.cancel(timeout);
-            timeout = null;
+            $timeout(function() {
+              $timeout.cancel(timeout);
+              timeout = null;
+            }, catchupTime);
           }
         }, applyLocally);
 

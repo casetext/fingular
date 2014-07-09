@@ -1,6 +1,6 @@
 {
   "name": "fingular",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A Firebase service provider for AngularJS designed for testability.",
   "main": "fingular.js",
   "scripts": {
