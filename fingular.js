@@ -17,15 +17,15 @@
         var timeout = $timeout(timeoutElapsed, timeoutLimit);
 
         this._ref.on(eventType, function() {
-          callback(arguments);
+          callback.apply(context, arguments);
           if (timeout) {
-            timeout.cancel();
+            $timeout.cancel(timeout);
             timeout = null;
           }
         }, function() {
-          cancelCallback(arguments);
+          cancelCallback.apply(context, arguments);
           if (timeout) {
-            timeout.cancel();
+            $timeout.cancel(timeout);
             timeout = null;
           }
         }, context);
@@ -41,15 +41,15 @@
         var timeout = $timeout(timeoutElapsed, timeoutLimit);
 
         this._ref.once(eventType, function() {
-          successCallback(arguments);
+          successCallback.apply(context, arguments);
           if (timeout) {
-            timeout.cancel();
+            $timeout.cancel(timeout);
             timeout = null;
           }
         }, function() {
-          failureCallback(arguments);
+          failureCallback.apply(context, arguments);
           if (timeout) {
-            timeout.cancel();
+            $timeout.cancel(timeout);
             timeout = null;
           }
         }, context);
@@ -74,6 +74,13 @@
 
     function ProxiedFirebase(ref) {
       this._ref = ref;
+
+      if (typeof(this._ref.flush) === 'function') {
+        this.flush = function() {
+          this._ref.flush(arguments);
+        };
+
+      }
     }
 
     ProxiedFirebase.prototype = {
@@ -89,7 +96,7 @@
         this._ref.auth(token, function(err) {
           cb(arguments);
           if (timeout) {
-            timeout.cancel();
+            $timeout.cancel(timeout);
             timeout = null;
           }
         });
@@ -124,7 +131,7 @@
 
           // cancel timeout
           if (timeout) {
-            timeout.cancel();
+            $timeout.cancel(timeout);
             timeout = null;
           }
         });
@@ -139,7 +146,7 @@
 
           // cancel timeout
           if (timeout) {
-            timeout.cancel();
+            $timeout.cancel(timeout);
             timeout = null;
           }
 
@@ -155,7 +162,7 @@
 
           // cancel timeout
           if (timeout) {
-            timeout.cancel();
+            $timeout.cancel(timeout);
             timeout = null;
           }
 
@@ -171,7 +178,7 @@
 
           // cancel timeout
           if (timeout) {
-            timeout.cancel();
+            $timeout.cancel(timeout);
             timeout = null;
           }
 
@@ -187,7 +194,7 @@
 
           // cancel timeout
           if (timeout) {
-            timeout.cancel();
+            $timeout.cancel(timeout);
             timeout = null;
           }
 
@@ -203,7 +210,7 @@
 
           // cancel timeout
           if (timeout) {
-            timeout.cancel();
+            $timeout.cancel(timeout);
             timeout = null;
           }
 
@@ -225,7 +232,7 @@
 
           // cancel timeout
           if (timeout) {
-            timeout.cancel();
+            $timeout.cancel(timeout);
             timeout = null;
           }
         }, applyLocally);
@@ -240,7 +247,7 @@
       endAt: ProxiedQuery.prototype.endAt
 
     };
-    ProxiedFirebase.prototype.constructor = ProxiedFirebase;
+
     return ProxiedFirebase;
   }])
   .provider('$firebaseRef', function FirebaseRefProvider() {
