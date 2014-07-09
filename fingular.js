@@ -83,19 +83,27 @@
       },
 
       limit: function() {
-        return new ProxiedQuery(this._ref.limit(arguments));
+        return new ProxiedQuery(
+          this._ref.limit.apply(this._ref, arguments)
+        );
       },
 
       startAt: function() {
-        return new ProxiedQuery(this._ref.startAt(arguments));
+        return new ProxiedQuery(
+          this._ref.startAt.apply(this._ref, arguments)
+        );
       },
 
       endAt: function() {
-        return new ProxiedQuery(this._ref.endAt(arguments));
+        return new ProxiedQuery(
+          this._ref.endAt.apply(this._ref, arguments)
+        );
       },
 
       ref: function() {
-        return new ProxiedFirebase(this._ref.ref());
+        return new ProxiedFirebase(
+          this._ref.ref()
+        );
       }
     };
 
@@ -308,8 +316,10 @@
       once: ProxiedQuery.prototype.once,
       limit: ProxiedQuery.prototype.limit,
       startAt: ProxiedQuery.prototype.startAt,
-      endAt: ProxiedQuery.prototype.endAt
-
+      endAt: ProxiedQuery.prototype.endAt,
+      ref: function() {
+        return this;
+      }
     };
 
     return ProxiedFirebase;
