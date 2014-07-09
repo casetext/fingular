@@ -1,10 +1,13 @@
 'use strict';
 
 (function(angular, Firebase) {
+
+  var noop = function() {};
+
   angular.module('fingular', [])
   .factory('ProxiedFirebase', ['$timeout', function($timeout) {
 
-    var timeoutElapsed = function() {}
+    var timeoutElapsed = noop
       , timeoutLimit = 10000
       , catchupTime = 50;
 
@@ -14,6 +17,9 @@
 
     ProxiedQuery.prototype = {
       on: function(eventType, callback, cancelCallback, context) {
+
+        callback = callback || noop;
+        cancelCallback = cancelCallback || noop;
 
         var timeout = $timeout(timeoutElapsed, timeoutLimit);
 
@@ -46,6 +52,9 @@
       },
 
       once: function(eventType, successCallback, failureCallback, context) {
+
+        successCallback = successCallback || noop;
+        failureCallback = failureCallback || noop;
 
         var timeout = $timeout(timeoutElapsed, timeoutLimit);
 
@@ -111,6 +120,8 @@
         var that = this
           , timeout = $timeout(timeoutElapsed, timeoutLimit);
 
+        cb = cb || noop;
+
         this._ref.auth(token, function(err) {
           cb.apply(that, arguments);
 
@@ -148,6 +159,8 @@
         var that = this
           , timeout = $timeout(timeoutElapsed, timeoutLimit);
 
+        onComplete = onComplete || noop;
+
         this._ref.set(value, function(err) {
           onComplete.apply(that, arguments);
 
@@ -164,6 +177,8 @@
       update: function(value, onComplete) {
         var that = this
           , timeout = $timeout(timeoutElapsed, timeoutLimit);
+
+        onComplete = onComplete || noop;
 
         this._ref.update(value, function(err) {
           onComplete.apply(that, arguments);
@@ -183,6 +198,8 @@
         var that = this
           , timeout = $timeout(timeoutElapsed, timeoutLimit);
 
+        onComplete = onComplete || noop;
+
         this._ref.remove(function(err) {
           onComplete.apply(that, arguments);
 
@@ -200,6 +217,8 @@
       push: function(value, onComplete) {
         var that = this
           , timeout = $timeout(timeoutElapsed, timeoutLimit);
+
+        onComplete = onComplete || noop;
 
         this._ref.push(value, function(err) {
           onComplete.apply(that, arguments);
@@ -220,6 +239,8 @@
         var that = this
           , timeout = $timeout(timeoutElapsed, timeoutLimit);
 
+        onComplete = onComplete || noop;
+
         this._ref.setWithPriority(value, priority, function(err) {
           onComplete.apply(that, arguments);
 
@@ -239,6 +260,8 @@
         var that = this
           , timeout = $timeout(timeoutElapsed, timeoutLimit);
 
+        onComplete = onComplete || noop;
+
         this._ref.setPriority(priority, function(err) {
           onComplete.apply(that, arguments);
 
@@ -257,6 +280,8 @@
 
         var timeout
           , that = this;
+
+        onComplete = onComplete || noop;
 
         this._ref.transaction(function() {
 
