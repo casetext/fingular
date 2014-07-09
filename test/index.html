@@ -5,16 +5,56 @@
   </head>
   <body>
     <div id="mocha"></div>
-    <script src="../node_modules/es5-shim/es5-shim.js"></script>
+    <script>
+      var isFunction = function(o) {
+        return typeof o == 'function';
+      };
+
+      var bind,
+      slice = [].slice,
+      proto = Function.prototype,
+      featureMap;
+
+      featureMap = {
+        'function-bind': 'bind'
+      };
+
+      function has(feature) {
+        var prop = featureMap[feature];
+        return isFunction(proto[prop]);
+      }
+
+      // check for missing features
+      if (!has('function-bind')) {
+        // adapted from Mozilla Developer Network example at
+        // https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Function/bind
+        bind = function bind(obj) {
+          var args = slice.call(arguments, 1),
+          self = this,
+          nop = function() {
+          },
+          bound = function() {
+            return self.apply(this instanceof nop ? this : (obj || {}), args.concat(slice.call(arguments)));
+          };
+          nop.prototype = this.prototype || {}; // Firefox cries sometimes if prototype is undefined
+          bound.prototype = new nop();
+          return bound;
+        };
+        proto.bind = bind;
+      }
+
+    </script>
     <script src="../node_modules/mockfirebase/node_modules/lodash/lodash.js"></script>
     <script src="../node_modules/mocha-phantomjs/node_modules/mocha/mocha.js"></script>
     <script src="../node_modules/chai/chai.js"></script>
     <script src="../node_modules/mockfirebase/node_modules/sinon/pkg/sinon.js"></script>
     <script>
       mocha.ui('bdd');
+      mocha.globals(['angular']);
       mocha.reporter('html');
       expect = chai.expect;
     </script>
+
     <script src="../bower_components/firebase/firebase-debug.js"></script>
     <script src="../bower_components/angular/angular.js"></script>
     <script src="../bower_components/angular-mocks/angular-mocks.js"></script>
@@ -25,7 +65,7 @@
     <script src="spec/firebaseRef.js"></script>
     <script src="spec/firebaseUser.js"></script>
     <script>
-      if (window.mochaPhantomJS) { mochaPhantomJS.run(); }
+      if (window.mochaPhantomJS) { mochaPhantomJS.run();  }
       else { mocha.run(); }
     </script>
   </body>

@@ -1,6 +1,9 @@
 MockFirebase.DEFAULT_DATA = {
 };
 
+var module = angular.mock.module
+  , inject = angular.mock.inject;
+
 describe('the "$firebaseRef" provider', function() {
   it(
     'fails without the firebaseDomain property on firebaseProvider ' +

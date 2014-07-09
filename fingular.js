@@ -240,7 +240,7 @@
       endAt: ProxiedQuery.prototype.endAt
 
     };
-
+    ProxiedFirebase.prototype.constructor = ProxiedFirebase;
     return ProxiedFirebase;
   }])
   .provider('$firebaseRef', function FirebaseRefProvider() {

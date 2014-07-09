@@ -1,3 +1,6 @@
+var module = angular.mock.module
+  , inject = angular.mock.inject;
+
 MockFirebase.DEFAULT_DATA = {
 };
 
