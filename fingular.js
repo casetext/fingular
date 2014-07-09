@@ -2,6 +2,247 @@
 
 (function(angular, Firebase) {
   angular.module('fingular', [])
+  .factory('ProxiedFirebase', ['$timeout', function($timeout) {
+
+    var timeoutElapsed = function() {}
+      , timeoutLimit = 10000;
+
+    function ProxiedQuery(query) {
+      this._ref = query;
+    }
+
+    ProxiedQuery.prototype = {
+      on: function(eventType, callback, cancelCallback, context) {
+
+        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+
+        this._ref.on(eventType, function() {
+          callback(arguments);
+          if (timeout) {
+            timeout.cancel();
+            timeout = null;
+          }
+        }, function() {
+          cancelCallback(arguments);
+          if (timeout) {
+            timeout.cancel();
+            timeout = null;
+          }
+        }, context);
+        return callback;
+      },
+
+      off: function() {
+        this._ref.off(arguments);
+      },
+
+      once: function(eventType, successCallback, failureCallback, context) {
+
+        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+
+        this._ref.once(eventType, function() {
+          successCallback(arguments);
+          if (timeout) {
+            timeout.cancel();
+            timeout = null;
+          }
+        }, function() {
+          failureCallback(arguments);
+          if (timeout) {
+            timeout.cancel();
+            timeout = null;
+          }
+        }, context);
+      },
+
+      limit: function() {
+        return new ProxiedQuery(this._ref.limit(arguments));
+      },
+
+      startAt: function() {
+        return new ProxiedQuery(this._ref.startAt(arguments));
+      },
+
+      endAt: function() {
+        return new ProxiedQuery(this._ref.endAt(arguments));
+      },
+
+      ref: function() {
+        return new ProxiedFirebase(this._ref.ref());
+      }
+    };
+
+    function ProxiedFirebase(ref) {
+      this._ref = ref;
+    }
+
+    ProxiedFirebase.prototype = {
+
+      toString: function() {
+        return this._ref.toString(arguments);
+      },
+
+      auth: function(token, cb) {
+
+        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+
+        this._ref.auth(token, function(err) {
+          cb(arguments);
+          if (timeout) {
+            timeout.cancel();
+            timeout = null;
+          }
+        });
+      },
+
+      unauth: function() {
+        this._ref.unauth();
+      },
+
+      child: function(childPath) {
+        return new ProxiedFirebase(this._ref.child(childPath));
+      },
+
+      parent: function() {
+        return new ProxiedFirebase(this._ref.parent());
+      },
+
+      root: function() {
+        return new ProxiedFirebase(this._ref.root());
+      },
+
+      name: function() {
+        return this._ref.name();
+      },
+
+      set: function(value, onComplete) {
+
+        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+
+        this._ref.set(value, function(err) {
+          onComplete(arguments);
+
+          // cancel timeout
+          if (timeout) {
+            timeout.cancel();
+            timeout = null;
+          }
+        });
+      },
+
+      update: function(value, onComplete) {
+
+        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+
+        this._ref.update(value, function(err) {
+          onComplete(arguments);
+
+          // cancel timeout
+          if (timeout) {
+            timeout.cancel();
+            timeout = null;
+          }
+
+        });
+      },
+
+      remove: function(onComplete) {
+
+        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+
+        this._ref.remove(function(err) {
+          onComplete(arguments);
+
+          // cancel timeout
+          if (timeout) {
+            timeout.cancel();
+            timeout = null;
+          }
+
+        });
+      },
+
+      push: function(value, onComplete) {
+
+        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+
+        this._ref.push(value, function(err) {
+          onComplete(arguments);
+
+          // cancel timeout
+          if (timeout) {
+            timeout.cancel();
+            timeout = null;
+          }
+
+        });
+      },
+
+      setWithPriority: function(value, priority, onComplete) {
+
+        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+
+        this._ref.setWithPriority(value, priority, function(err) {
+          onComplete(arguments);
+
+          // cancel timeout
+          if (timeout) {
+            timeout.cancel();
+            timeout = null;
+          }
+
+        });
+      },
+
+      setPriority: function(priority, onComplete) {
+
+        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+
+        this._ref.setPriority(priority, function(err) {
+          onComplete(arguments);
+
+          // cancel timeout
+          if (timeout) {
+            timeout.cancel();
+            timeout = null;
+          }
+
+        });
+      },
+
+      transaction: function(updateFn, onComplete, applyLocally) {
+
+        var timeout;
+
+        this._ref.transaction(function() {
+
+          // start timeout
+          timeout = $timeout(timeoutElapsed, timeoutLimit);
+
+          updateFn(arguments);
+        }, function(err) {
+          onComplete(arguments);
+
+          // cancel timeout
+          if (timeout) {
+            timeout.cancel();
+            timeout = null;
+          }
+        }, applyLocally);
+
+      },
+
+      on: ProxiedQuery.prototype.on,
+      off: ProxiedQuery.prototype.off,
+      once: ProxiedQuery.prototype.once,
+      limit: ProxiedQuery.prototype.limit,
+      startAt: ProxiedQuery.prototype.startAt,
+      endAt: ProxiedQuery.prototype.endAt
+
+    };
+
+    return ProxiedFirebase;
+  }])
   .provider('$firebaseRef', function FirebaseRefProvider() {
     var firebaseDomain
       , protocol = 'https'
@@ -38,7 +279,7 @@
       return this;
     };
 
-    this.$get = ['$injector', function($injector) {
+    this.$get = ['$timeout', '$injector', 'ProxiedFirebase', function($timeout, $injector, ProxiedFirebase) {
       if (!(typeof(firebaseDomain) === 'string')) {
         if ($injector.has('firebaseDomain')) {
           firebaseDomain = $injector.get('firebaseDomain');
@@ -69,6 +310,7 @@
       }
 
       var injectable = function(path) {
+
         if (!path) {
           path = '/';
         } else if (path[0] !== '/') {
@@ -76,9 +318,13 @@
         }
 
         if (mockMode) {
-          return new mockFirebase('Mock://' + firebaseDomain + path, mockData[path]);
+          return new ProxiedFirebase(
+            new mockFirebase('Mock://' + firebaseDomain + path, mockData[path])
+          );
         } else {
-          return new Firebase(protocol + '://' + firebaseDomain + path);
+          return new ProxiedFirebase(
+            new Firebase(protocol + '://' + firebaseDomain + path)
+          );
         }
       };
       injectable.protocol = protocol;
