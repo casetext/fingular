@@ -95,7 +95,7 @@
 
       if (typeof(this._ref.flush) === 'function') {
         this.flush = function() {
-          this._ref.flush(arguments);
+          this._ref.flush.apply(this._ref, arguments);
         };
 
       }
@@ -104,15 +104,15 @@
     ProxiedFirebase.prototype = {
 
       toString: function() {
-        return this._ref.toString(arguments);
+        return this._ref.toString.apply(this._ref, arguments);
       },
 
       auth: function(token, cb) {
-
-        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+        var that = this
+          , timeout = $timeout(timeoutElapsed, timeoutLimit);
 
         this._ref.auth(token, function(err) {
-          cb(arguments);
+          cb.apply(that, arguments);
 
           // cancel timeout
           if (timeout) {
@@ -145,11 +145,11 @@
       },
 
       set: function(value, onComplete) {
-
-        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+        var that = this
+          , timeout = $timeout(timeoutElapsed, timeoutLimit);
 
         this._ref.set(value, function(err) {
-          onComplete(arguments);
+          onComplete.apply(that, arguments);
 
           // cancel timeout
           if (timeout) {
@@ -162,11 +162,11 @@
       },
 
       update: function(value, onComplete) {
-
-        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+        var that = this
+          , timeout = $timeout(timeoutElapsed, timeoutLimit);
 
         this._ref.update(value, function(err) {
-          onComplete(arguments);
+          onComplete.apply(that, arguments);
 
           // cancel timeout
           if (timeout) {
@@ -180,11 +180,11 @@
       },
 
       remove: function(onComplete) {
-
-        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+        var that = this
+          , timeout = $timeout(timeoutElapsed, timeoutLimit);
 
         this._ref.remove(function(err) {
-          onComplete(arguments);
+          onComplete.apply(that, arguments);
 
           // cancel timeout
           if (timeout) {
@@ -198,11 +198,11 @@
       },
 
       push: function(value, onComplete) {
-
-        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+        var that = this
+          , timeout = $timeout(timeoutElapsed, timeoutLimit);
 
         this._ref.push(value, function(err) {
-          onComplete(arguments);
+          onComplete.apply(that, arguments);
 
           // cancel timeout
           if (timeout) {
@@ -217,10 +217,11 @@
 
       setWithPriority: function(value, priority, onComplete) {
 
-        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+        var that = this
+          , timeout = $timeout(timeoutElapsed, timeoutLimit);
 
         this._ref.setWithPriority(value, priority, function(err) {
-          onComplete(arguments);
+          onComplete.apply(that, arguments);
 
           // cancel timeout
           if (timeout) {
@@ -235,10 +236,11 @@
 
       setPriority: function(priority, onComplete) {
 
-        var timeout = $timeout(timeoutElapsed, timeoutLimit);
+        var that = this
+          , timeout = $timeout(timeoutElapsed, timeoutLimit);
 
         this._ref.setPriority(priority, function(err) {
-          onComplete(arguments);
+          onComplete.apply(that, arguments);
 
           // cancel timeout
           if (timeout) {
@@ -253,16 +255,17 @@
 
       transaction: function(updateFn, onComplete, applyLocally) {
 
-        var timeout;
+        var timeout
+          , that = this;
 
         this._ref.transaction(function() {
 
           // start timeout
           timeout = $timeout(timeoutElapsed, timeoutLimit);
 
-          updateFn(arguments);
+          updateFn.apply(that, arguments);
         }, function(err) {
-          onComplete(arguments);
+          onComplete.apply(that, arguments);
 
           // cancel timeout
           if (timeout) {
