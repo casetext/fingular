@@ -11,6 +11,57 @@
       , timeoutLimit = 10000
       , catchupTime = 50;
 
+    function ProxiedSnapshot(snap) {
+      this._snap = snap;
+    }
+
+    ProxiedSnapshot.prototype = {
+      val: function() {
+        return this._snap.val();
+      },
+
+      child: function() {
+        return this._snap.child.apply(this._snap, arguments);
+      },
+
+      forEach: function(cb) {
+        return this._snap.forEach(function(childSnap) {
+          if (cb(new ProxiedSnapshot(childSnap)) === true) {
+            return true;
+          }
+        });
+      },
+
+      hasChild: function() {
+        return this._snap.hasChild.apply(this._snap, arguments);
+      },
+
+      hasChildren: function() {
+        return this._snap.hasChildren.apply(this._snap, arguments);
+      },
+
+      name: function() {
+        return this._snap.name.apply(this._snap, arguments);
+      },
+
+      numChildren: function() {
+        return this._snap.numChildren();
+      },
+
+      ref: function() {
+        return new ProxiedFirebase(this._snap.ref());
+      },
+
+      getPriority: function() {
+        return this._snap.getPriority();
+      },
+
+      exportVal: function() {
+        return this._snap.exportVal();
+      }
+
+    };
+
     function ProxiedQuery(query) {
       this._ref = query;
     }
@@ -23,8 +74,10 @@
 
         var timeout = $timeout(timeoutElapsed, timeoutLimit);
 
-        this._ref.on(eventType, function() {
-          callback.apply(context, arguments);
+        this._ref.on(eventType, function(snap, prevName) {
+
+
+          callback.call(context, new ProxiedSnapshot(snap), prevName);
 
           // cancel timeout
           if (timeout) {
@@ -48,7 +101,7 @@
       },
 
       off: function() {
-        this._ref.off(arguments);
+        this._ref.off.apply(this._ref, arguments);
       },
 
       once: function(eventType, successCallback, failureCallback, context) {
@@ -58,8 +111,9 @@
 
         var timeout = $timeout(timeoutElapsed, timeoutLimit);
 
-        this._ref.once(eventType, function() {
-          successCallback.apply(context, arguments);
+        this._ref.once(eventType, function(snap, prevName) {
+
+          successCallback.call(context, new ProxiedSnapshot(snap), prevName);
 
           // cancel timeout
           if (timeout) {
@@ -228,7 +282,7 @@
 
         onComplete = onComplete || noop;
 
-        this._ref.push(value, function(err) {
+        return new ProxiedFirebase(this._ref.push(value, function(err) {
           onComplete.apply(that, arguments);
 
           // cancel timeout
@@ -239,7 +293,7 @@
             }, catchupTime);
           }
 
-        });
+        }));
       },
 
       setWithPriority: function(value, priority, onComplete) {
