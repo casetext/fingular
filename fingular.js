@@ -76,25 +76,41 @@
 
         this._ref.on(eventType, function(snap, prevName) {
 
+          var error;
 
-          callback.call(context, new ProxiedSnapshot(snap), prevName);
+          try {
+            callback.call(context, new ProxiedSnapshot(snap), prevName);
+          } catch(e) {
+            error = e;
+          } finally {
 
-          // cancel timeout
-          if (timeout) {
-            $timeout(function() {
+            // cancel timeout
+            if (timeout) {
               $timeout.cancel(timeout);
-              timeout = null;
-            }, catchupTime);
+            }
+
+            if (error) {
+              throw(error);
+            }
           }
         }, function() {
-          cancelCallback.apply(context, arguments);
 
-          // cancel timeout
-          if (timeout) {
-            $timeout(function() {
+          var error;
+
+          try {
+            cancelCallback.apply(context, arguments);
+          } catch(e) {
+            error = e;
+          } finally {
+
+            // cancel timeout
+            if (timeout) {
               $timeout.cancel(timeout);
-              timeout = null;
-            }, catchupTime);
+            }
+
+            if (error) {
+              throw(error);
+            }
           }
         }, context);
         return callback;
@@ -113,25 +129,41 @@
 
         this._ref.once(eventType, function(snap, prevName) {
 
-          successCallback.call(context, new ProxiedSnapshot(snap), prevName);
+          var error;
 
-          // cancel timeout
-          if (timeout) {
-            $timeout(function() {
+          try {
+            successCallback.call(context, new ProxiedSnapshot(snap), prevName);
+          } catch(e) {
+            error = e;
+          } finally {
+
+            // cancel timeout
+            if (timeout) {
               $timeout.cancel(timeout);
-              timeout = null;
-            }, catchupTime);
+            }
+
+            if (error) {
+              throw(error);
+            }
           }
-
         }, function() {
-          failureCallback.apply(context, arguments);
 
-          // cancel timeout
-          if (timeout) {
-            $timeout(function() {
+          var error;
+
+          try {
+            failureCallback.apply(context, arguments);
+          } catch(e) {
+            error = e;
+          } finally {
+
+            // cancel timeout
+            if (timeout) {
               $timeout.cancel(timeout);
-              timeout = null;
-            }, catchupTime);
+            }
+
+            if (error) {
+              throw(error);
+            }
           }
         }, context);
       },
@@ -185,14 +217,23 @@
         cb = cb || noop;
 
         this._ref.auth(token, function(err) {
-          cb.apply(that, arguments);
 
-          // cancel timeout
-          if (timeout) {
-            $timeout(function() {
+          var error;
+
+          try {
+            cb.apply(that, arguments);
+          } catch(e) {
+            error = e;
+          } finally {
+
+            // cancel timeout
+            if (timeout) {
               $timeout.cancel(timeout);
-              timeout = null;
-            }, catchupTime);
+            }
+
+            if (error) {
+              throw(error);
+            }
           }
         });
       },
@@ -224,14 +265,23 @@
         onComplete = onComplete || noop;
 
         this._ref.set(value, function(err) {
-          onComplete.apply(that, arguments);
 
-          // cancel timeout
-          if (timeout) {
-            $timeout(function() {
+          var error;
+
+          try {
+            onComplete.apply(that, arguments);
+          } catch(e) {
+            error = e;
+          } finally {
+
+            // cancel timeout
+            if (timeout) {
               $timeout.cancel(timeout);
-              timeout = null;
-            }, catchupTime);
+            }
+
+            if (error) {
+              throw(error);
+            }
           }
         });
       },
@@ -243,14 +293,23 @@
         onComplete = onComplete || noop;
 
         this._ref.update(value, function(err) {
-          onComplete.apply(that, arguments);
 
-          // cancel timeout
-          if (timeout) {
-            $timeout(function() {
+          var error;
+
+          try {
+            onComplete.apply(that, arguments);
+          } catch(e) {
+            error = e;
+          } finally {
+
+            // cancel timeout
+            if (timeout) {
               $timeout.cancel(timeout);
-              timeout = null;
-            }, catchupTime);
+            }
+
+            if (error) {
+              throw(error);
+            }
           }
 
         });
@@ -263,14 +322,23 @@
         onComplete = onComplete || noop;
 
         this._ref.remove(function(err) {
-          onComplete.apply(that, arguments);
 
-          // cancel timeout
-          if (timeout) {
-            $timeout(function() {
+          var error;
+
+          try {
+            onComplete.apply(that, arguments);
+          } catch(e) {
+            error = e;
+          } finally {
+
+            // cancel timeout
+            if (timeout) {
               $timeout.cancel(timeout);
-              timeout = null;
-            }, catchupTime);
+            }
+
+            if (error) {
+              throw(error);
+            }
           }
 
         });
@@ -283,14 +351,23 @@
         onComplete = onComplete || noop;
 
         return new ProxiedFirebase(this._ref.push(value, function(err) {
-          onComplete.apply(that, arguments);
 
-          // cancel timeout
-          if (timeout) {
-            $timeout(function() {
+          var error;
+
+          try {
+            onComplete.apply(that, arguments);
+          } catch(e) {
+            error = e;
+          } finally {
+
+            // cancel timeout
+            if (timeout) {
               $timeout.cancel(timeout);
-              timeout = null;
-            }, catchupTime);
+            }
+
+            if (error) {
+              throw(error);
+            }
           }
 
         }));
@@ -304,14 +381,23 @@
         onComplete = onComplete || noop;
 
         this._ref.setWithPriority(value, priority, function(err) {
-          onComplete.apply(that, arguments);
 
-          // cancel timeout
-          if (timeout) {
-            $timeout(function() {
+          var error;
+
+          try {
+            onComplete.apply(that, arguments);
+          } catch(e) {
+            error = e;
+          } finally {
+
+            // cancel timeout
+            if (timeout) {
               $timeout.cancel(timeout);
-              timeout = null;
-            }, catchupTime);
+            }
+
+            if (error) {
+              throw(error);
+            }
           }
 
         });
@@ -325,14 +411,23 @@
         onComplete = onComplete || noop;
 
         this._ref.setPriority(priority, function(err) {
-          onComplete.apply(that, arguments);
 
-          // cancel timeout
-          if (timeout) {
-            $timeout(function() {
+          var error;
+
+          try {
+            onComplete.apply(that, arguments);
+          } catch(e) {
+            error = e;
+          } finally {
+
+            // cancel timeout
+            if (timeout) {
               $timeout.cancel(timeout);
-              timeout = null;
-            }, catchupTime);
+            }
+
+            if (error) {
+              throw(error);
+            }
           }
 
         });
@@ -352,17 +447,25 @@
 
           updateFn.apply(that, arguments);
         }, function(err) {
-          onComplete.apply(that, arguments);
 
-          // cancel timeout
-          if (timeout) {
-            $timeout(function() {
+          var error;
+
+          try {
+            onComplete.apply(that, arguments);
+          } catch(e) {
+            error = e;
+          } finally {
+
+            // cancel timeout
+            if (timeout) {
               $timeout.cancel(timeout);
-              timeout = null;
-            }, catchupTime);
-          }
-        }, applyLocally);
+            }
 
+            if (error) {
+              throw(error);
+            }
+          }
+        })
       },
 
       on: ProxiedQuery.prototype.on,
