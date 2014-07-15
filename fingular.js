@@ -445,13 +445,13 @@
           // start timeout
           timeout = $timeout(timeoutElapsed, timeoutLimit);
 
-          updateFn.apply(that, arguments);
-        }, function(err) {
+          return updateFn.apply(that, arguments);
+        }, function(err, committed, snap) {
 
           var error;
 
           try {
-            onComplete.apply(that, arguments);
+            onComplete.call(that, err, committed, new ProxiedSnapshot(snap));
           } catch(e) {
             error = e;
           } finally {
